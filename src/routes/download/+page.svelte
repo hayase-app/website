@@ -43,12 +43,15 @@
 
   function getOS () {
     // @ts-expect-error bad typedef
-    const platform = navigator.userAgentData?.platform ?? navigator.platform
+    const uaData = navigator.userAgentData
+    const platform = uaData?.platform ?? navigator.platform
     const macosPlatforms = ['macOS', 'Macintosh', 'MacIntel', 'MacPPC', 'Mac68K']
     const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE']
     const iosPlatforms = ['iPhone', 'iPad', 'iPod']
 
     if (iosPlatforms.includes(platform)) return 'iOS'
+    if (uaData?.mobile && macosPlatforms.includes(platform)) return 'iOS'
+    if (navigator.userAgent.includes('iPad')) return 'iOS'
     if (macosPlatforms.includes(platform)) return 'Mac OS'
     if (windowsPlatforms.includes(platform)) return 'Windows'
     if (navigator.userAgent.includes('Android')) return 'Android'
