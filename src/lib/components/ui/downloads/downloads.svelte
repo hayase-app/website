@@ -77,11 +77,12 @@
     const fingerprint = localStorage.getItem('fingerprint') ?? await getBrowserFingerprint()
     localStorage.setItem('fingerprint', fingerprint)
 
-    const url = (ext: string) => Object.entries(releases).find(([name]) => name.endsWith(ext))?.[1] ?? ''
+    const url = (ext: string, matches: (name: string) => boolean = () => true) => Object.entries(releases).find(([name]) => name.endsWith(ext) && matches(name))?.[1] ?? ''
 
     downloads = {
       iOS: 'http://staging.hayase.app/assets/' + fingerprint + '.zip',
-      Android: url('.apk'),
+      // The universal apk has no architecture suffix. Do not select an architecture-specific apk.
+      Android: url('.apk', (name) => /^android-[\d.]+\.apk$/.test(name)),
       Windows: url('installer.exe'),
       'Mac OS': url('.dmg'),
       Linux: url('.AppImage'),
