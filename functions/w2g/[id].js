@@ -18,7 +18,10 @@ export function onRequest ({ params }) {
   </head>
   <body>
     <a href="${deepLink}">Redirecting...</a>
-    <script>location.href = ${JSON.stringify(deepLink)}</script>
+    <script>
+      location.href = ${JSON.stringify(deepLink)}
+      setTimeout(() => { location.replace('https://hayase.watch') }, 1000)
+    </script>
   </body>
 </html>`
 
