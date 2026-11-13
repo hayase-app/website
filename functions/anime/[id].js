@@ -138,28 +138,61 @@ async function getCookie () {
   return { sess, token }
 }
 
+/**
+ * A redirect to a non-http scheme is not reliable. Some browsers drop it. Serve
+ * the OG tags and a page that opens the app.
+ */
+function openInApp (id) {
+  const deepLink = 'hayase://anime/' + id
+
+  const html = /* html */`
+<!DOCTYPE html>
+<html style=background:#000>
+  <head>
+    <meta property="og:title" content="Shared Anime">
+    <meta property="og:description" content='Stream anime torrents, real-time with no waiting for downloads.'>
+    <meta property="og:site_name" content="Hayase">
+    <meta property="og:image" content=https://img.anili.st/media/${id}>
+    <meta property="og:url" content=hayase://anime/${id}>
+    <meta data-vmid="twitter:card" name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content='#17191C'>
+  </head>
+  <body>
+    <a href="${deepLink}">Redirecting...</a>
+    <script>location.href = '${deepLink}'</script>
+  </body>
+</html>`
+
+  return new Response(html, {
+    headers: {
+      'content-type': 'text/html;charset=UTF-8'
+    }
+  })
+}
+
 export async function onRequest ({ params, request }) {
   const id = Number(params.id)
+  if (!Number.isSafeInteger(id)) return Response.redirect('https://hayase.watch/')
+
+  const ua = request.headers.get('user-agent') ?? ''
+
+  // A crawler cannot open the app, so serve the preview page.
+  if (!ua.includes('Discordbot')) return openInApp(id)
+
   try {
-    if (Number.isSafeInteger(id)) {
-      const ua = request.headers.get('user-agent') ?? ''
-      if (!ua.includes('Discordbot')) {
-        return Response.redirect('hayase://anime/' + id)
-      }
+    const { sess, token } = await getCookie()
 
-      const { sess, token } = await getCookie()
-
-      const res = await fetch('https://anilist.co/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Cookie: `${sess.name}=${sess.value}`,
-          'x-csrf-token': token,
-          Referer: 'https://anilist.co/anime/' + id
-        },
-        body: JSON.stringify({
-          query: /* js */`
+    const res = await fetch('https://anilist.co/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Cookie: `${sess.name}=${sess.value}`,
+        'x-csrf-token': token,
+        Referer: 'https://anilist.co/anime/' + id
+      },
+      body: JSON.stringify({
+        query: /* js */`
             query($id: Int) {
               Media(id: $id) {
                 title {
@@ -175,13 +208,13 @@ export async function onRequest ({ params, request }) {
               }
             }
           `,
-          variables: {
-            id
-          }
-        }).replace('\n', ',')
-      })
-      if (!res.ok) {
-        const html = /* html */`
+        variables: {
+          id
+        }
+      }).replace('\n', ',')
+    })
+    if (!res.ok) {
+      const html = /* html */`
 <!DOCTYPE html>
 <html style=background:#000>
   <head>
@@ -197,20 +230,20 @@ export async function onRequest ({ params, request }) {
   <body>
   </body>
 </html>`
-        return new Response(html, {
-          headers: {
-            'content-type': 'text/html;charset=UTF-8'
-          }
-        })
-      }
+      return new Response(html, {
+        headers: {
+          'content-type': 'text/html;charset=UTF-8'
+        }
+      })
+    }
 
-      const { data } = await res.json()
+    const { data } = await res.json()
 
-      const title = data.Media.title.english ?? data.Media.title.userPreferred ?? 'Anime'
+    const title = data.Media.title.english ?? data.Media.title.userPreferred ?? 'Anime'
 
-      const strippedDescription = data.Media.description?.replace(/<[^>]+>/g, '') ?? ''
+    const strippedDescription = data.Media.description?.replace(/<[^>]+>/g, '') ?? ''
 
-      const html = /* html */`
+    const html = /* html */`
 <!DOCTYPE html>
 <html style=background:#000>
   <head>
@@ -227,12 +260,11 @@ export async function onRequest ({ params, request }) {
   </body>
 </html>`
 
-      return new Response(html, {
-        headers: {
-          'content-type': 'text/html;charset=UTF-8'
-        }
-      })
-    }
+    return new Response(html, {
+      headers: {
+        'content-type': 'text/html;charset=UTF-8'
+      }
+    })
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     console.error('Redirect error:', msg)

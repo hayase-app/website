@@ -2,12 +2,12 @@
 
 export function onRequest ({ params }) {
   try {
-    const id = params.id
+    const id = encodeURIComponent(params.id)
+    const deepLink = 'hayase://w2g/' + id
     const html = /* html */`
 <!DOCTYPE html>
 <html style=background:#000>
   <head>
-    <meta http-equiv=refresh content="5; url=https://hayase.watch">
     <meta property="og:title" content="Watch Together">
     <meta property="og:description" content="Stream anime torrents, real-time with no waiting for downloads">
     <meta property="og:site_name" content="Hayase">
@@ -17,7 +17,8 @@ export function onRequest ({ params }) {
     <meta name="theme-color" content="#17191C">
   </head>
   <body>
-    <iframe src=hayase://w2g/${id} style=border:none></iframe>Redirecting...
+    <a href="${deepLink}">Redirecting...</a>
+    <script>location.href = ${JSON.stringify(deepLink)}</script>
   </body>
 </html>`
 

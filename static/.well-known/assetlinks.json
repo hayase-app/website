@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.hayase",
+      "sha256_cert_fingerprints": [
+        "5B:46:D9:26:A7:97:3E:C4:5D:02:85:62:47:D3:8F:0A:D4:55:D3:7F:3F:A1:4D:13:D9:61:3B:C5:B9:90:C8:93",
+        "26:DF:0F:D4:B5:AE:1F:10:16:EF:86:BA:DE:FB:F3:CF:A1:59:54:DE:24:D1:84:67:E3:7E:CB:C5:31:0A:70:62"
+      ]
+    }
+  }
+]
